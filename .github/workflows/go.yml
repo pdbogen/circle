@@ -1,7 +1,8 @@
 name: Go
-on: [push]
+on:
+  push:
+    tags: ["v*"]
 jobs:
-
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -25,3 +26,43 @@ jobs:
         GOOS=windows GOARCH=amd64 go build -o circle.win64.exe -v .
         GOOS=linux   GOARCH=amd64 go build -o circle.linux64 -v .
         GOOS=darwin  GOARCH=amd64 go build -o circle.darwin64 -v .
+    - name: Release
+      id: create_release      
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: upload win64
+      id: upload-release-asset-win64
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./circle.win64.exe
+        asset_name: circle.wine64.exe
+        asset_content_type: application/octet-stream
+    - name: upload linux64
+      id: upload-release-asset-linux64
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./circle.linux64
+        asset_name: circle.linux64
+        asset_content_type: application/octet-stream
+    - name: upload darwin64
+      id: upload-release-asset-darwin64
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./circle.darwin64
+        asset_name: circle.darwin64
+        asset_content_type: application/octet-stream
