@@ -44,7 +44,7 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./circle.win64.exe
-        asset_name: circle.wine64.exe
+        asset_name: circle.win64.exe
         asset_content_type: application/octet-stream
     - name: upload linux64
       id: upload-release-asset-linux64
