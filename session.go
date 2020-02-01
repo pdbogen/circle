@@ -1,4 +1,4 @@
-package main
+package circle
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func login(email, password string) *Session {
+func NewSession(email, password string) *Session {
 	sess, err := ioutil.ReadFile("session.json")
 	if err != nil {
 		log.Printf("could not read session.json, will re-login: %v", err)
