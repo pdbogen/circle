@@ -23,9 +23,9 @@ jobs:
 
     - name: Build
       run: |
-        GOOS=windows GOARCH=amd64 go build -o circle.win64.exe -v .
-        GOOS=linux   GOARCH=amd64 go build -o circle.linux64 -v .
-        GOOS=darwin  GOARCH=amd64 go build -o circle.darwin64 -v .
+        GOOS=windows GOARCH=amd64 go build -o circle.win64.exe -v ./cmd
+        GOOS=linux   GOARCH=amd64 go build -o circle.linux64 -v ./cmd
+        GOOS=darwin  GOARCH=amd64 go build -o circle.darwin64 -v ./cmd
     - name: Release
       id: create_release      
       uses: actions/create-release@v1
