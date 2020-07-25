@@ -26,23 +26,23 @@ func (s *Session) GetAccessory(id string) (*Accessory, error) {
 	return ret, nil
 }
 
-func (s *Session) GetAccessories() []*Accessory {
+func (s *Session) GetAccessories() ([]*Accessory, error) {
 	res, err := s.Get("https://video.logi.com/api/accessories")
 	if err != nil {
-		log.Fatalf("GETing accessories: %v", err)
+		return nil, fmt.Errorf("GETing accessories: %w", err)
 	}
 	defer res.Body.Close()
 	dec := json.NewDecoder(res.Body)
 	var accs []*Accessory
 	if err := dec.Decode(&accs); err != nil {
-		log.Fatalf("reading/parsing response body: %v", err)
+		return nil, fmt.Errorf("reading/parsing response body: %w", err)
 	}
 
 	for _, acc := range accs {
 		acc.session = s
 	}
 
-	return accs
+	return accs, nil
 }
 
 func (a *Accessory) GetActivitiesByAccessoryId(begin, end time.Time) []*Activity {

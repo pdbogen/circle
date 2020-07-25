@@ -15,6 +15,7 @@ type Session struct {
 type Accessory struct {
 	Name        string `json:"name"`
 	AccessoryId string `json:"accessoryId"`
+	NodeId      string `json:"nodeId"`
 	session     *Session
 }
 
@@ -40,4 +41,8 @@ type Activity struct {
 
 func (a Activity) String() string {
 	return fmt.Sprintf("%s (%v)", a.ActivityId, a.ActivityTime)
+}
+
+type GetLiveImageInput struct {
+	AccessoryId string `json:"accessoryId"`
 }
