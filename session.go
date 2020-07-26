@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -44,7 +45,8 @@ func login(email, password string) (*Session, error) {
 	defer res.Body.Close()
 
 	if res.StatusCode/100 != 2 {
-		return nil, fmt.Errorf("non-2XX %d POSTing to %q", res.StatusCode, url)
+		body, _ := ioutil.ReadAll(res.Body)
+		return nil, fmt.Errorf("non-2XX %d POSTing to %q: %q", res.StatusCode, url, string(body))
 	}
 
 	for _, cookie := range res.Cookies() {
