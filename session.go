@@ -5,50 +5,46 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
 )
 
-func NewSession(email, password string) *Session {
-	sess, err := ioutil.ReadFile("session.json")
+func NewSession(email, password, sessionFile string) (*Session, error) {
+	if sessionFile != "" {
+		session, err := load(sessionFile)
+		if err == nil {
+			return session, nil
+		}
+		log.Warningf("unable to load session file, will try to re-login: %v", err)
+	}
+
+	session, err := login(email, password)
 	if err != nil {
-		log.Printf("could not read session.json, will re-login: %v", err)
-		return reLogin(email, password)
+		return nil, fmt.Errorf("unable to login: %w", err)
 	}
 
-	var r *Session
-	if err := json.Unmarshal(sess, &r); err != nil {
-		log.Printf("could not parse session.json; will re-login: %v", err)
-		return reLogin(email, password)
+	if sessionFile != "" {
+		if err := session.save(sessionFile); err != nil {
+			return nil, fmt.Errorf("login was successful, but could not save session file to %q: %w",
+				sessionFile, err)
+		}
 	}
 
-	if r.Expiry.Before(time.Now()) {
-		log.Print("session is expired; will re-login")
-		return reLogin(email, password)
-	}
-
-	return r
+	return session, nil
 }
 
-func reLogin(email, password string) *Session {
-	if email == "" {
-		log.Fatal("-email is required")
-	}
-	if password == "" {
-		log.Fatal("-password is required")
-	}
-
+func login(email, password string) (*Session, error) {
 	r := &Session{}
-	res, err := r.Post("https://video.logi.com/api/accounts/authorization", map[string]string{"email": email, "password": password})
+	url := "https://video.logi.com/api/accounts/authorization"
+	res, err := r.Post(url, map[string]string{"email": email, "password": password})
 	if err != nil {
-		log.Fatalf("sending login: %v")
+		return nil, fmt.Errorf("sending login: %w", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode/100 != 2 {
-		log.Fatalf("non-2XX %d POSTing to logi.com", res.StatusCode)
+		return nil, fmt.Errorf("non-2XX %d POSTing to %q", res.StatusCode, url)
 	}
 
 	for _, cookie := range res.Cookies() {
@@ -58,17 +54,42 @@ func reLogin(email, password string) *Session {
 			break
 		}
 	}
-	f, err := os.OpenFile("session.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(0644))
+
+	return r, nil
+}
+
+func load(path string) (*Session, error) {
+	f, err := os.Open(path)
 	if err != nil {
-		log.Fatalf("couldn't open session.json to save: %v", err)
+		return nil, fmt.Errorf("opening %q for reading: %w", path, err)
 	}
 	defer f.Close()
-	enc := json.NewEncoder(f)
-	if err := enc.Encode(r); err != nil {
-		log.Fatalf("could not encode session: %v", err)
+	dec := json.NewDecoder(f)
+	var ret *Session
+	if err := dec.Decode(&ret); err != nil {
+		return nil, fmt.Errorf("could not decode session: %w", err)
 	}
 
-	return r
+	if ret.Expiry.After(time.Now()) {
+		return nil, fmt.Errorf("saved session expired on %s", ret.Expiry.Format(time.RFC3339))
+	}
+
+	return ret, nil
+}
+
+func (s *Session) save(path string) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("opening %q for writing: %w", path, err)
+	}
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	if err := enc.Encode(s); err != nil {
+		return fmt.Errorf("encoding session to file: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Session) Get(url string) (*http.Response, error) {
