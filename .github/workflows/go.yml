@@ -22,6 +22,7 @@ jobs:
         go generate ./...
         arch=${{matrix.arch}}
         export GOOS=${arch%%_*} GOARCH=${arch##*_} GOARM=5
+        export CGO_ENABLED=0
         go build -o circle.$arch -v --ldflags="-s" ./cmd
     - name: upload-artifact circle
       uses: actions/upload-artifact@v1
