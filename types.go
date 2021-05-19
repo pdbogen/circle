@@ -8,8 +8,7 @@ import (
 const CircleTime = "20060102T150405Z"
 
 type Session struct {
-	SessionId string
-	Expiry    time.Time
+	Jwt string
 }
 
 type Accessory struct {

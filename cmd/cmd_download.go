@@ -11,7 +11,7 @@ import (
 var downloadCmd = &cobra.Command{
 	Use:   "download {accessory-id}",
 	Short: "download video ('activities') from an accessory",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run:   downloadRun,
 }
 

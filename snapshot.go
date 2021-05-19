@@ -10,7 +10,7 @@ func (a *Accessory) GetSnapshot() (io.ReadCloser, error) {
 		return nil, fmt.Errorf("missing node ID")
 	}
 
-	res, err := a.session.Get(fmt.Sprintf("https://%s/api/accessories/%s/image?refresh=true", a.NodeId, a.AccessoryId))
+	res, err := a.session.Get(fmt.Sprintf("https://%s/api/accessories/%s/image?refresh=true&q=1", a.NodeId, a.AccessoryId))
 	if err != nil {
 		return nil, fmt.Errorf("retrieving image: %q", err)
 	}
